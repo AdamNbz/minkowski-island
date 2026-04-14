@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Minh họa đảo Minkowski bằng Three.js</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div id="ui">
+    <h1>Đảo Minkowski – Three.js</h1>
+    <p>
+      Mỗi cạnh của hình vuông được thay bằng một mẫu gấp khúc gồm 8 đoạn con,
+      mỗi đoạn có độ dài bằng <strong>1/4</strong> cạnh ban đầu.
+    </p>
+
+    <div class="row">
+      <label for="level">Số lần lặp: <span id="levelValue">2</span></label>
+      <input id="level" type="range" min="0" max="4" step="1" value="2" />
+    </div>
+
+    <div class="row">
+      <button id="rebuildBtn">Vẽ lại</button>
+      <button id="spinBtn" class="secondary">Bật/Tắt xoay</button>
+    </div>
+
+    <div id="stats"></div>
+  </div>
+
+  <div id="hint">Kéo chuột để xoay góc nhìn • Lăn chuột để zoom</div>
+
+  <script type="module" src="script.js"></script>
+</body>
+</html>
