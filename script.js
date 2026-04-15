@@ -1,225 +1,155 @@
-import * as THREE from 'https://esm.sh/three@0.183.0';
-import { OrbitControls } from 'https://esm.sh/three@0.183.0/examples/jsm/controls/OrbitControls.js';
-
-const scene = new THREE.Scene();
-scene.background = new THREE.Color(0xeef2f7);
-
-const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
-camera.position.set(0, -95, 90);
-camera.up.set(0, 0, 1);
-camera.lookAt(0, 0, 0);
-
-const renderer = new THREE.WebGLRenderer({ antialias: true });
-renderer.setSize(window.innerWidth, window.innerHeight);
-renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-document.body.appendChild(renderer.domElement);
-
-const controls = new OrbitControls(camera, renderer.domElement);
-controls.enableDamping = true;
-controls.target.set(0, 0, 0);
-controls.minDistance = 40;
-controls.maxDistance = 220;
-controls.update();
-
-const ambient = new THREE.AmbientLight(0xffffff, 0.75);
-scene.add(ambient);
-
-const dirLight = new THREE.DirectionalLight(0xffffff, 0.9);
-dirLight.position.set(50, -40, 80);
-scene.add(dirLight);
-
-const grid = new THREE.GridHelper(180, 18, 0x94a3b8, 0xcbd5e1);
-grid.rotation.x = Math.PI / 2;
-scene.add(grid);
-
-const axes = new THREE.AxesHelper(40);
-scene.add(axes);
-
-let islandGroup = null;
-let autoSpin = true;
-
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
 const levelInput = document.getElementById('level');
 const levelValue = document.getElementById('levelValue');
 const stats = document.getElementById('stats');
-const rebuildBtn = document.getElementById('rebuildBtn');
-const spinBtn = document.getElementById('spinBtn');
+const redrawBtn = document.getElementById('redrawBtn');
 
-function add2(a, b) {
+function add(a, b) {
     return { x: a.x + b.x, y: a.y + b.y };
 }
 
-function sub2(a, b) {
+function sub(a, b) {
     return { x: a.x - b.x, y: a.y - b.y };
 }
 
-function mul2(v, s) {
+function mul(v, s) {
     return { x: v.x * s, y: v.y * s };
 }
 
-function rotate90CCW(v) {
+function len(v) {
+    return Math.hypot(v.x, v.y);
+}
+
+function normalize(v) {
+    const l = len(v);
+    return { x: v.x / l, y: v.y / l };
+}
+
+function leftNormal(v) {
     return { x: -v.y, y: v.x };
 }
 
-// Thay 1 đoạn AB bằng mẫu 8 đoạn con kiểu biên Minkowski phổ biến.
-function minkowskiReplace(a, b) {
-    const v = sub2(b, a);
-    const q = mul2(v, 0.25);
-    const n = rotate90CCW(q);
+// Sinh mẫu Minkowski type 2 cho một cạnh A -> B
+function generateSegment(A, B) {
+    const d = sub(B, A);
+    const L = len(d);
+    const u = normalize(d);
+    const v = leftNormal(u);
+    const step = L / 4;
 
-    const p1 = add2(a, q);
-    const p2 = add2(p1, n);
-    const p3 = add2(p2, q);
-    const p4 = add2(p3, { x: -n.x, y: -n.y });
-    const p5 = add2(p4, { x: -n.x, y: -n.y });
-    const p6 = add2(p5, q);
-    const p7 = add2(p6, n);
+    const p0 = A;
+    const p1 = add(p0, mul(u, step));
+    const p2 = add(p1, mul(v, step));
+    const p3 = add(p2, mul(u, step));
+    const p4 = sub(p3, mul(v, step));
+    const p5 = sub(p4, mul(v, step));
+    const p6 = add(p5, mul(u, step));
+    const p7 = add(p6, mul(v, step));
+    const p8 = add(p7, mul(u, step));
 
-    return [a, p1, p2, p3, p4, p5, p6, p7, b];
+    return [p0, p1, p2, p3, p4, p5, p6, p7, p8];
 }
 
-function iterateClosedPolyline(points) {
+function iteratePolygon(points) {
     const result = [];
     for (let i = 0; i < points.length; i++) {
-    const a = points[i];
-    const b = points[(i + 1) % points.length];
-    const replaced = minkowskiReplace(a, b);
+    const A = points[i];
+    const B = points[(i + 1) % points.length];
+    const generated = generateSegment(A, B);
     if (i === 0) {
-        result.push(...replaced.slice(0, -1));
+        result.push(...generated.slice(0, -1));
     } else {
-        result.push(...replaced.slice(1, -1));
+        result.push(...generated.slice(1, -1));
     }
     }
     return result;
 }
 
-function buildMinkowskiIsland(level) {
-    let points = [
-    { x: -24, y: -24 },
-    { x:  24, y: -24 },
-    { x:  24, y:  24 },
-    { x: -24, y:  24 }
+function createSquare(size) {
+    const cx = canvas.width / 2;
+    const cy = canvas.height / 2;
+    const h = size / 2;
+    return [
+    { x: cx - h, y: cy - h },
+    { x: cx + h, y: cy - h },
+    { x: cx + h, y: cy + h },
+    { x: cx - h, y: cy + h }
     ];
+}
 
+function buildMinkowskiIsland(level) {
+    let poly = createSquare(220);
     for (let i = 0; i < level; i++) {
-    points = iterateClosedPolyline(points);
+    poly = iteratePolygon(poly);
     }
-    return points;
+    return poly;
 }
 
-function pointsToVectors(points, z = 0) {
-    return points.map(p => new THREE.Vector3(p.x, p.y, z));
-}
-
-function disposeGroup(group) {
-    if (!group) return;
-    group.traverse(obj => {
-    if (obj.geometry) obj.geometry.dispose();
-    if (obj.material) {
-        if (Array.isArray(obj.material)) obj.material.forEach(m => m.dispose());
-        else obj.material.dispose();
+function bounds(points) {
+    let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+    for (const p of points) {
+    if (p.x < minX) minX = p.x;
+    if (p.y < minY) minY = p.y;
+    if (p.x > maxX) maxX = p.x;
+    if (p.y > maxY) maxY = p.y;
     }
-    });
-    scene.remove(group);
+    return { minX, minY, maxX, maxY, width: maxX - minX, height: maxY - minY };
 }
 
-function rebuildIsland() {
-    const level = parseInt(levelInput.value, 10);
-    levelValue.textContent = level;
+function fitPoints(points, padding = 40) {
+    const b = bounds(points);
+    const scale = Math.min(
+    (canvas.width - padding * 2) / b.width,
+    (canvas.height - padding * 2) / b.height
+    );
+    return points.map(p => ({
+    x: (p.x - b.minX) * scale + padding,
+    y: (p.y - b.minY) * scale + padding
+    }));
+}
 
-    const pts = buildMinkowskiIsland(level);
-    const vectors = pointsToVectors(pts, 0);
-    const closedVectors = [...vectors, vectors[0].clone()];
+function polygonPerimeter(points) {
+    let sum = 0;
+    for (let i = 0; i < points.length; i++) {
+    sum += len(sub(points[(i + 1) % points.length], points[i]));
+    }
+    return sum;
+}
 
-    disposeGroup(islandGroup);
-    islandGroup = new THREE.Group();
+function draw(level) {
+    let pts = buildMinkowskiIsland(level);
+    pts = fitPoints(pts, 45);
+    const perimeter = polygonPerimeter(pts);
 
-    // Tạo mặt đảo.
-    const shape = new THREE.Shape();
-    shape.moveTo(pts[0].x, pts[0].y);
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    ctx.fillStyle = '#eef4ff';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    ctx.beginPath();
+    ctx.moveTo(pts[0].x, pts[0].y);
     for (let i = 1; i < pts.length; i++) {
-    shape.lineTo(pts[i].x, pts[i].y);
+    ctx.lineTo(pts[i].x, pts[i].y);
     }
-    shape.closePath();
+    ctx.closePath();
 
-    const fillGeometry = new THREE.ShapeGeometry(shape);
-    const fillMaterial = new THREE.MeshPhongMaterial({
-    color: 0x93c5fd,
-    transparent: true,
-    opacity: 0.88,
-    side: THREE.DoubleSide
-    });
-    const fillMesh = new THREE.Mesh(fillGeometry, fillMaterial);
-    fillMesh.position.z = -0.2;
-    islandGroup.add(fillMesh);
+    ctx.fillStyle = '#dbeafe';
+    ctx.strokeStyle = '#1d4ed8';
+    ctx.lineWidth = 2;
+    ctx.fill();
+    ctx.stroke();
 
-    // Viền fractal.
-    const outlineGeometry = new THREE.BufferGeometry().setFromPoints(closedVectors);
-    const outlineMaterial = new THREE.LineBasicMaterial({ color: 0x1d4ed8 });
-    const outline = new THREE.Line(outlineGeometry, outlineMaterial);
-    outline.position.z = 0.6;
-    islandGroup.add(outline);
-
-    // Các đỉnh nổi bật để dễ quan sát.
-    const pointsGeometry = new THREE.BufferGeometry().setFromPoints(vectors);
-    const pointsMaterial = new THREE.PointsMaterial({
-    color: 0x0f172a,
-    size: level <= 1 ? 1.8 : (level === 2 ? 1.2 : 0.85),
-    sizeAttenuation: false
-    });
-    const pointCloud = new THREE.Points(pointsGeometry, pointsMaterial);
-    pointCloud.position.z = 1.0;
-    islandGroup.add(pointCloud);
-
-    // Khung đáy nhẹ để tăng cảm giác 3D.
-    const baseGeometry = new THREE.ExtrudeGeometry(shape, {
-    depth: 2.2,
-    bevelEnabled: false
-    });
-    const baseMaterial = new THREE.MeshPhongMaterial({
-    color: 0xbfdbfe,
-    transparent: true,
-    opacity: 0.35,
-    side: THREE.DoubleSide
-    });
-    const baseMesh = new THREE.Mesh(baseGeometry, baseMaterial);
-    baseMesh.position.z = -1.4;
-    islandGroup.add(baseMesh);
-
-    scene.add(islandGroup);
-
-    const edges = 4 * Math.pow(8, level);
-    stats.innerHTML = `
-    <strong>Thông tin:</strong><br>
-    - Số mức lặp: ${level}<br>
-    - Số cạnh biên sau lặp: ${edges}<br>
-    - Số đỉnh hiển thị: ${pts.length}<br>
-    - Công thức chiều fractal biên: D = log(8) / log(4) = 1.5
-    `;
+    stats.textContent = `Số điểm biên: ${pts.length} | Chu vi tương đối: ${perimeter.toFixed(2)} | Số lần lặp: ${level}`;
 }
 
-rebuildBtn.addEventListener('click', rebuildIsland);
-levelInput.addEventListener('input', () => {
-    levelValue.textContent = levelInput.value;
-    rebuildIsland();
-});
-spinBtn.addEventListener('click', () => {
-    autoSpin = !autoSpin;
-});
-
-window.addEventListener('resize', () => {
-    camera.aspect = window.innerWidth / window.innerHeight;
-    camera.updateProjectionMatrix();
-    renderer.setSize(window.innerWidth, window.innerHeight);
-});
-
-rebuildIsland();
-
-function animate() {
-    requestAnimationFrame(animate);
-    if (islandGroup && autoSpin) {
-    islandGroup.rotation.z += 0.0035;
-    }
-    controls.update();
-    renderer.render(scene, camera);
+function update() {
+    const level = Number(levelInput.value);
+    levelValue.textContent = level;
+    draw(level);
 }
-animate();
+
+levelInput.addEventListener('input', update);
+redrawBtn.addEventListener('click', update);
+
+update();

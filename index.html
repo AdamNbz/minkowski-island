@@ -1,34 +1,37 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="vi">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Minh họa đảo Minkowski bằng Three.js</title>
+  <title>Minh họa đảo Minkowski</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <div id="ui">
-    <h1>Đảo Minkowski – Three.js</h1>
-    <p>
-      Mỗi cạnh của hình vuông được thay bằng một mẫu gấp khúc gồm 8 đoạn con,
-      mỗi đoạn có độ dài bằng <strong>1/4</strong> cạnh ban đầu.
-    </p>
-
-    <div class="row">
-      <label for="level">Số lần lặp: <span id="levelValue">2</span></label>
-      <input id="level" type="range" min="0" max="4" step="1" value="2" />
+  <div class="wrap">
+    <div class="panel">
+      <h1>Đảo Minkowski</h1>
+      <p>
+        Mỗi cạnh của hình vuông được thay bằng một mẫu gấp khúc gồm 8 đoạn con.
+        Tăng số lần lặp sẽ làm đường biên ngày càng phức tạp nhưng vẫn nằm trong
+        một vùng hữu hạn.
+      </p>
+      <div class="controls">
+        <label for="level">Số lần lặp:</label>
+        <input id="level" type="range" min="0" max="4" step="1" value="2" />
+        <span class="badge" id="levelValue">2</span>
+        <button id="redrawBtn">Vẽ lại</button>
+      </div>
+      <div class="note">
+        Gợi ý: mức <code>0</code> là hình vuông ban đầu, mức <code>4</code> cho biên rất chi tiết.
+      </div>
     </div>
 
-    <div class="row">
-      <button id="rebuildBtn">Vẽ lại</button>
-      <button id="spinBtn" class="secondary">Bật/Tắt xoay</button>
+    <div class="panel">
+      <canvas id="canvas" width="900" height="700"></canvas>
+      <div class="note" id="stats"></div>
     </div>
-
-    <div id="stats"></div>
   </div>
 
-  <div id="hint">Kéo chuột để xoay góc nhìn • Lăn chuột để zoom</div>
-
-  <script type="module" src="script.js"></script>
+  <script src="script.js"></script>
 </body>
 </html>

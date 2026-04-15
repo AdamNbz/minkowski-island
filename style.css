@@ -1,72 +1,64 @@
-* { box-sizing: border-box; }
 body {
-    margin: 0;
-    overflow: hidden;
     font-family: Arial, sans-serif;
-    background: #eef2f7;
+    margin: 0;
+    background: #f5f7fb;
     color: #1f2937;
 }
-#ui {
-    position: absolute;
-    top: 16px;
-    left: 16px;
-    z-index: 10;
-    width: 320px;
-    padding: 14px 16px;
-    border-radius: 14px;
-    background: rgba(255,255,255,0.92);
-    box-shadow: 0 10px 30px rgba(0,0,0,0.12);
-    backdrop-filter: blur(8px);
+.wrap {
+    max-width: 980px;
+    margin: 24px auto;
+    padding: 0 16px;
 }
-#ui h1 {
-    margin: 0 0 10px;
-    font-size: 18px;
+.panel {
+    background: #fff;
+    border-radius: 16px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.08);
+    padding: 18px;
+    margin-bottom: 16px;
 }
-#ui p {
-    margin: 8px 0;
-    line-height: 1.45;
-    font-size: 14px;
+h1 { margin: 0 0 8px; font-size: 28px; }
+p { line-height: 1.5; }
+.controls {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px 20px;
+    align-items: center;
+    margin-top: 10px;
 }
-.row {
-    margin: 10px 0;
-}
-label {
-    display: block;
-    margin-bottom: 6px;
-    font-weight: bold;
-    font-size: 14px;
-}
-input[type="range"] {
-    width: 100%;
+label { font-weight: 600; }
+input[type="range"] { width: 240px; }
+.badge {
+    display: inline-block;
+    padding: 6px 10px;
+    border-radius: 999px;
+    background: #e8eefc;
+    font-weight: 700;
 }
 button {
-    cursor: pointer;
     border: none;
     border-radius: 10px;
-    padding: 10px 12px;
-    font-size: 14px;
-    margin-right: 8px;
+    padding: 10px 14px;
+    cursor: pointer;
+    font-weight: 700;
     background: #2563eb;
     color: white;
 }
-button.secondary {
-    background: #475569;
+button:hover { opacity: 0.92; }
+canvas {
+    width: 100%;
+    height: auto;
+    display: block;
+    background: white;
+    border-radius: 14px;
+    border: 1px solid #dbe3f0;
 }
-#stats {
-    margin-top: 8px;
-    padding-top: 8px;
-    border-top: 1px solid #dbe3ee;
-    font-size: 13px;
-    color: #334155;
+.note {
+    font-size: 14px;
+    color: #4b5563;
+    margin-top: 10px;
 }
-#hint {
-    position: absolute;
-    right: 16px;
-    bottom: 16px;
-    z-index: 10;
-    padding: 10px 12px;
-    border-radius: 12px;
-    background: rgba(15,23,42,0.82);
-    color: white;
-    font-size: 13px;
+code {
+    background: #f3f4f6;
+    padding: 2px 6px;
+    border-radius: 6px;
 }
