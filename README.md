@@ -1,7 +1,7 @@
 # Minkowski Island using WebGL
 
 # Description
-Ứng dụng minh họa vẽ đảo Minkowski sử dụng thư viện Threejs của WebGL + thuật toán đệ quy truyền thống.
+Ứng dụng minh họa vẽ đảo Minkowski sử dụng WebGL + thuật toán đệ quy truyền thống.
 
 # How to use
 1. Clone repository về local và sử dụng Live Server từ VSCode.
